@@ -232,6 +232,7 @@ package spwpkg is
     component spwstream is
         generic (
             sysfreq:        real;                           -- clk freq in Hz
+            txclkfreq:      real := 0.0;                    -- txclk freq in Hz
             rximpl:         spw_implementation_type := impl_generic;
             rxchunk:        integer range 1 to 4 := 1;      -- max bits per clk
             tximpl:         spw_implementation_type := impl_generic;

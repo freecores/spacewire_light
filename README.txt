@@ -30,19 +30,11 @@ of a SpaceWire encoder-decoder according to ECSS-E-50-12C.
 The core is "light" in the sense that it does not provide additional
 features such as RMAP, routing etc.
 
-This core would be very suitable for application in lab environments,
-to add a SpaceWire interface to a custom FPGA design, and for interfacing
-between existing SpaceWire equipment and a computer.
+See doc/Manual.pdf for more information.
 
-The project is currently very much in alpha phase. Most importantly,
-there is no proper documentation. I WILL PROVIDE DOCUMENTATION SOON.
-
-Short term plan:
- * more testing
- * documentation
-
-Long term plan:
+Future plans:
  * add AMBA bus interface
+ * try to run on Virtex
 
 
 Contact

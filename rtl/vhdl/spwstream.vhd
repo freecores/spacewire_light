@@ -11,7 +11,7 @@
 --
 --  The SpaceWire standard requires that each transceiver use an initial
 --  signalling rate of 10 Mbit/s. This implies that the system clock frequency
---  must be a multiple of 10 MHz. See the datasheet for further details on
+--  must be a multiple of 10 MHz. See the manual for further details on
 --  bitrates and clocking.
 --
 
@@ -26,8 +26,13 @@ entity spwstream is
         -- System clock frequency in Hz.
         -- This must be set to the frequency of "clk". It is used to setup
         -- counters for reset timing, disconnect timeout and to transmit
-        -- at 10 Mbit/s during the handshake.
+        -- at 10 Mbit/s during the link handshake.
         sysfreq:        real;
+
+        -- Transmit clock frequency in Hz (only if tximpl = impl_fast).
+        -- This must be set to the frequency of "txclk". It is used to
+        -- transmit at 10 Mbit/s during the link handshake.
+        txclkfreq:      real := 0.0;
 
         -- Selection of a receiver front-end implementation.
         rximpl:         spw_implementation_type := impl_generic;
@@ -67,12 +72,13 @@ entity spwstream is
         -- Without autostart or linkstart, the link remains in state Ready.
         linkstart:  in  std_logic;
 
-        -- Do not start link (overrides linkstart and autostart) and/or disconnect
-        -- if the link is in state Run.
+        -- Do not start link (overrides linkstart and autostart) and/or
+        -- disconnect a running link.
         linkdis:    in  std_logic;
 
-        -- Scaling factor minus 1, used to scale the system clock into the transmission
-        -- signalling rate. The system clock is divided by (unsigned(divcnt) + 1).
+        -- Scaling factor minus 1, used to scale the transmit base clock into
+        -- the transmission bit rate. The system clock (for impl_generic) or
+        -- the txclk (for impl_fast) is divided by (unsigned(txdivcnt) + 1).
         -- Changing this signal will immediately change the transmission rate.
         -- During link setup, the transmission rate is always 10 Mbit/s.
         txdivcnt:   in  std_logic_vector(7 downto 0);
@@ -193,8 +199,12 @@ architecture spwstream_arch of spwstream is
     constant disconnect_time:   integer := integer(sysfreq * 850.0e-9);
 
     -- Initial tx clock scaler (10 Mbit).
+    type impl_to_real_type is array(spw_implementation_type) of real;
+    constant tximpl_to_txclk_freq: impl_to_real_type :=
+        (impl_generic => sysfreq, impl_fast => txclkfreq);
+    constant effective_txclk_freq: real := tximpl_to_txclk_freq(tximpl);
     constant default_divcnt:    std_logic_vector(7 downto 0) :=
-        std_logic_vector(to_unsigned(integer(sysfreq / 10.0e6 - 1.0), 8));
+        std_logic_vector(to_unsigned(integer(effective_txclk_freq / 10.0e6 - 1.0), 8));
 
     -- Registers.
     type regs_type is record

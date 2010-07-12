@@ -8,16 +8,17 @@
 # The project name. The bit-file that is generated in the end will be named
 # "$(PROJ).bit"
 
-PROJ = spwstream
+PROJ = streamtest
 
 # The top-level entity to be instantiated
 
-TOPLEVEL = spwstream_top
+TOPLEVEL = streamtest_top
 
 # The VHDL sources that need to be compiled during synthesis
 
 RTLDIR = ../../rtl/vhdl
-VHDL_SOURCES = spwstream_top.vhd \
+VHDL_SOURCES = streamtest_top.vhd \
+               $(RTLDIR)/streamtest.vhd \
                $(RTLDIR)/spwpkg.vhd \
                $(RTLDIR)/spwstream.vhd \
                $(RTLDIR)/spwlink.vhd \
@@ -28,15 +29,17 @@ VHDL_SOURCES = spwstream_top.vhd \
                $(RTLDIR)/spwrecvfront_generic.vhd \
                $(RTLDIR)/spwrecvfront_fast.vhd
 
-# Device type: Spartan-3 on Pender XC3S1500 board
+# For Pender XC3S1500 board
+FPGA_TYPE	= xc3s1500-fg456-4
 
-FPGA_TYPE       = xc3s1500-fg456-4
+## For Pender XC3S2000 rev2 board
+#FPGA_TYPE	= xc3s2000-fg456-4
 
 # The default target; recommended targets: "bitfile" or "upload"
 
 default : bitfile
 
-UCFFILE = spwstream.ucf
+UCFFILE = streamtest.ucf
 
 ###############################################################################
 ##                                                                           ##
@@ -119,6 +122,7 @@ $(PROJ).xst-script :
 	@echo "-glob_opt                             AllClockNets"     >> $@
 	@echo "-rtlview                              no"               >> $@
 	@echo "-read_cores                           yes"              >> $@
+# Note: write_timing_constraints is non-standard
 	@echo "-write_timing_constraints             yes"              >> $@
 	@echo "-cross_clock_analysis                 no"               >> $@
 #	@echo "-hierarchy_separator                  _"                >> $@
@@ -130,6 +134,8 @@ $(PROJ).xst-script :
 	@echo "-fsm_extract                          yes"              >> $@
 	@echo "-fsm_encoding                         auto"             >> $@
 	@echo "-fsm_style                            lut"              >> $@
+# Note: safe_implementation is non-standard
+	@echo "-safe_implementation                  yes"              >> $@
 	@echo "-ram_extract                          yes"              >> $@
 	@echo "-ram_style                            auto"             >> $@
 	@echo "-rom_extract                          yes"              >> $@
@@ -257,6 +263,7 @@ $(PROJ).twr $(PROJ).twx : $(PROJ).ncd $(PROJ).pcf
 # We omit "-g StartUpClk:JtagClk" ; this doesn't work if the image is loaded
 # from a PROM.
 
+# Note: LCK_cycle:3 is non-standard
 OPT_BITGEN = -w                     \
              -g DebugBitstream:No   \
              -g Binary:no           \
@@ -278,7 +285,7 @@ OPT_BITGEN = -w                     \
              -g DONE_cycle:4        \
              -g GTS_cycle:5         \
              -g GWE_cycle:6         \
-             -g LCK_cycle:NoWait    \
+             -g LCK_cycle:3         \
              -g Match_cycle:Auto    \
              -g Security:None       \
              -g DonePipe:No         \
@@ -288,3 +295,4 @@ $(PROJ).bit $(PROJ).bgn $(PROJ).drc: $(PROJ).ncd
 	bitgen $(OPT_INTSTYLE) $(OPT_BITGEN) $(PROJ).ncd
 
 ###############################################################################
+

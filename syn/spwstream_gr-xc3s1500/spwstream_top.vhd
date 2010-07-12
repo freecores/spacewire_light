@@ -50,6 +50,7 @@ begin
     spwstream_inst: spwstream
         generic map (
             sysfreq         => 60.0e6,
+            txclkfreq       => 240.0e6,
             rximpl          => impl_fast,
             rxchunk         => 4,
             tximpl          => impl_fast,

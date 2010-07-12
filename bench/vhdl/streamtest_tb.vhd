@@ -28,6 +28,7 @@ architecture tb_arch of streamtest_tb is
     component streamtest is
         generic (
             sysfreq:    real;
+            txclkfreq:  real;
             tickdiv:    integer range 12 to 24 := 20;
             rximpl:     spw_implementation_type := impl_generic;
             rxchunk:    integer range 1 to 4 := 1;
@@ -84,6 +85,7 @@ begin
     streamtest_inst: streamtest
         generic map (
             sysfreq     => sys_clock_freq,
+            txclkfreq   => sys_clock_freq,
             tickdiv     => 16,
             rximpl      => impl_generic,
             rxchunk     => 1,

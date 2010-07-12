@@ -122,7 +122,7 @@
 --  no problem there.
 --
 --  This is different when the data stream includes 4-bit tokens.
---  See the datasheet for an analysis of that case.
+--  See the manual for further comments.
 --
 --  Implementation guidelines
 --  -------------------------
@@ -200,6 +200,7 @@ architecture spwxmit_fast_arch of spwxmit_fast is
     type token_type is record
         tick:       std_ulogic;                     -- send time code
         fct:        std_ulogic;                     -- send FCT
+        fctpiggy:   std_ulogic;                     -- send FCT and N-char
         flag:       std_ulogic;                     -- send EOP or EEP
         char:       std_logic_vector(7 downto 0);   -- character or time code
     end record;
@@ -220,6 +221,7 @@ architecture spwxmit_fast_arch of spwxmit_fast is
         b_token:    token_type;
         -- stage C
         c_update:   std_ulogic;
+        c_busy:     std_ulogic;
         c_esc:      std_ulogic;
         c_fct:      std_ulogic;
         c_bits:     std_logic_vector(8 downto 0);
@@ -277,6 +279,12 @@ architecture spwxmit_fast_arch of spwxmit_fast is
     end record;
 
     -- Initial state of system clock domain
+    constant token_reset: token_type := (
+        tick        => '0',
+        fct         => '0',
+        fctpiggy    => '0',
+        flag        => '0',
+        char        => (others => '0') );
     constant regs_reset: regs_type := (
         txenreg     => '0',
         txdivreg    => (others => '0'),
@@ -285,8 +293,8 @@ architecture spwxmit_fast_arch of spwxmit_fast is
         txdivsafe   => '0',
         sysflip0    => '0',
         sysflip1    => '0',
-        token0      => ( tick => '0', fct => '0', flag => '0', char => (others => '0') ),
-        token1      => ( tick => '0', fct => '0', flag => '0', char => (others => '0') ),
+        token0      => token_reset,
+        token1      => token_reset,
         tokmux      => '0',
         txflip0     => "00",
         txflip1     => "00",
@@ -336,7 +344,7 @@ begin
         vtx         := rtx;
         v_needtoken := '0';
         v_havetoken := '0';
-        v_token     := ( tick => '0', fct => '0', flag => '0', char => (others => '0') );
+        v_token     := token_reset;
 
         -- ---- FAST CLOCK DOMAIN ----
 
@@ -349,9 +357,9 @@ begin
         -- Stage B: Multiplex tokens from system clock domain.
         -- Update stage B three bit periods after updating stage C
         -- (i.e. in time for the next update of stage C).
-        -- Do not update stage B if the last token from stage C was ESC;
-        -- stage C already knows what token to put after the ESC.
-        vtx.b_update := rtx.txclken and rtx.e_count(0) and (not rtx.c_esc);
+        -- Do not update stage B if stage C is indicating that it needs to
+        -- send a second token to complete its task.
+        vtx.b_update := rtx.txclken and rtx.e_count(0) and (not rtx.c_busy);
         if rtx.b_mux = '0' then
             vtx.b_txflip := rtx.txflip0;
         else
@@ -380,11 +388,26 @@ begin
         -- Stage C: Prepare to transmit EOP, EEP or a data character.
         vtx.c_update := rtx.txclken and rtx.e_count(3);
         if rtx.c_update = '1' then
-            -- NULL is broken into two tokens: ESC + FCT
-            -- time codes are broken into two tokens: ESC + char
+
+            -- NULL is broken into two tokens: ESC + FCT.
+            -- Time-codes are broken into two tokens: ESC + char.
+
+            -- Enable c_esc on the first pass of a NULL or a time-code.
             vtx.c_esc   := (rtx.b_token.tick or (not rtx.b_valid)) and
                            (not rtx.c_esc);
-            vtx.c_fct   := rtx.b_token.fct or (not rtx.b_valid);
+
+            -- Enable c_fct on the first pass of an FCT and on
+            -- the second pass of a NULL (also the first pass, but c_esc
+            -- is stronger than c_fct).
+            vtx.c_fct   := (rtx.b_token.fct and (not rtx.c_busy)) or
+                           (not rtx.b_valid);
+
+            -- Enable c_busy on the first pass of a NULL or a time-code
+            -- or a piggy-backed FCT. This will tell stage B that we are
+            -- not done yet.
+            vtx.c_busy  := (rtx.b_token.tick or (not rtx.b_valid) or
+                            rtx.b_token.fctpiggy) and (not rtx.c_busy);
+
             if rtx.b_token.flag = '1' then
                 if rtx.b_token.char(0) = '0' then
                     -- prepare to send EOP
@@ -493,6 +516,7 @@ begin
             vtx.b_mux     := '0';
             vtx.b_valid   := '0';
             vtx.c_update  := '0';
+            vtx.c_busy    := '1';
             vtx.c_esc     := '1';           -- need to send 2nd part of NULL
             vtx.c_fct     := '1';
             vtx.d_bits    := "000000111";   -- ESC = P111
@@ -584,31 +608,34 @@ begin
                 -- prepare to send time code
                 v_token.tick  := '1';
                 v_token.fct   := '0';
+                v_token.fctpiggy := '0';
                 v_token.flag  := '0';
                 v_token.char  := r.pend_time;
                 v_havetoken   := '1';
                 if v_needtoken = '1' then
                     v.pend_tick := '0';
                 end if;
-            elsif r.allow_fct = '1' and (xmiti.fct_in = '1' or r.pend_fct = '1') then
-                -- prepare to send FCT
-                v_token.tick  := '0';
-                v_token.fct   := '1';
-                v_token.flag  := '0';
-                v_havetoken   := '1';
-                if v_needtoken = '1' then
-                    v.pend_fct  := '0';
-                    v.sent_fct  := '1';
+            else
+                if r.allow_fct = '1' and (xmiti.fct_in = '1' or r.pend_fct = '1') then
+                    -- prepare to send FCT
+                    v_token.fct   := '1';
+                    v_havetoken   := '1';
+                    if v_needtoken = '1' then
+                        v.pend_fct  := '0';
+                        v.sent_fct  := '1';
+                    end if;
                 end if;
-            elsif r.allow_char = '1' and r.pend_char = '1' then
-                -- prepare to send N-Char
-                v_token.tick  := '0';
-                v_token.fct   := '0';
-                v_token.flag  := r.pend_data(8);
-                v_token.char  := r.pend_data(7 downto 0);
-                v_havetoken   := '1';
-                if v_needtoken = '1' then
-                    v.pend_char := '0';
+                if r.allow_char = '1' and r.pend_char = '1' then
+                    -- prepare to send N-Char
+                    -- Note: it is possible to send an FCT and an N-Char
+                    -- together by enabling the fctpiggy flag.
+                    v_token.fctpiggy := v_token.fct;
+                    v_token.flag  := r.pend_data(8);
+                    v_token.char  := r.pend_data(7 downto 0);
+                    v_havetoken   := '1';
+                    if v_needtoken = '1' then
+                        v.pend_char := '0';
+                    end if;
                 end if;
             end if;
 

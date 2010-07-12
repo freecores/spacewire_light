@@ -31,6 +31,9 @@ entity streamtest is
         -- System clock frequency in Hz.
         sysfreq:    real;
 
+        -- txclk frequency in Hz (if tximpl = impl_fast).
+        txclkfreq:  real;
+
         -- 2-log of division factor from system clock freq to timecode freq.
         tickdiv:    integer range 12 to 24 := 20;
 
@@ -209,6 +212,7 @@ begin
     spwstream_inst: spwstream
         generic map (
             sysfreq         => sysfreq,
+            txclkfreq       => txclkfreq,
             rximpl          => rximpl,
             rxchunk         => rxchunk,
             tximpl          => tximpl,

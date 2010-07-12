@@ -1,37 +1,41 @@
 --
---  Test of spwstream on Digilent XC3S200 board.
---  60 MHz system clock, 200 MHz receive clock and transmit clock.
+--  Test of spwstream on Pender GR-XC3S-1500 board.
+--  60 MHz system clock; 200 MHz receive clock and transmit clock.
 --
---  LED 0 = link started
---  LED 1 = link connecting
---  LED 2 = link run
---  LED 3 = link error (sticky until clear button)
---  LED 4 = gotdata
---  LED 5 = off
---  LED 6 = data error (sticky until reset)
---  LED 7 = time code error (sticky until reset)
+--  LED 0 = link run
+--  LED 1 = link error (sticky until clear button)
+--  LED 2 = gotdata
+--  LED 3 = data/timecode error (sticky until reset)
 --
---  Button 0 = reset
---  Button 1 = clear LED 3
+--  Button S2 = reset
+--  Button S3 = clear LED 1
 --
---  Switch 0 = link autostart
---  Switch 1 = link start
---  Switch 2 = link disable
---  Switch 3 = send data and time codes
+--  Switch 0 = link start
+--  Switch 1 = link disable
+--  Switch 2 = send data
+--  Switch 3 = send time codes
 --  Switch 4-7 = bits 0-3 of tx bit rate scale factor
 --
---  SpaceWire signals on A2 expansion connector:
---    Data In    pos,neg  =  B5,C5  =  pin 19,6
---    Strobe In  pos,neg  =  D6,E6  =  pin 7,4
---    Data Out   pos,neg  =  B6,C6  =  pin 21,8
---    Strobe Out pos,neg  =  D7,E7  =  pin 11,9
+--  SpaceWire signals on expansion connector J12:
+--    Data In    pos,neg  =  m1,m2  =  pin 3,2
+--    Strobe In  pos,neg  =  m3,m4  =  pin 6,5
+--    Data Out   pos,neg  =  n1,n2  =  pin 9,8
+--    Strobe Out pos,neg  =  n3,n4  =  pin 12,11
 --
---  Note: these are not true LVDS signals; they are configured as LVDS25
---  but powered from 3.3V instead of 2.5V, not differentially routed and
---  not properly terminated.
+--  To get proper LVDS signals from connector J12, the voltage on I/O bank 6
+--  must be set to 2.5V. This is the default on GR-XC3S-1500-rev2, but on
+--  GR-XC3S-1500-rev1 a change is required on the board (described in
+--  the board manual).
 --
---  The SpaceWire port should be looped back to itself with wires from
---  outputs to corresponding inputs.
+--  To terminate the incoming LVDS signals, 100 Ohm termination resistors
+--  must be installed on the board in positions R120 and R121.
+--
+--  The SpaceWire port should be looped back to itself, either directly
+--  or via an other SpaceWire device. For a direct loopback, place 4 wires
+--  from the output pins to the corresponding input pins. For an indirect
+--  loopback, connect the SpaceWire signals to an additional SpaceWire device
+--  which is programmed to echo everything it receives (characters, packets,
+--  time codes). See the datasheet for a wiring diagram from J12 to MDM9.
 --
 
 library ieee;
@@ -43,18 +47,19 @@ use work.spwpkg.all;
 entity streamtest_top is
 
     port (
-        clk50:      in  std_logic;
-        button:     in  std_logic_vector(3 downto 0);
+        clk:        in  std_logic;
+        btn_reset:  in  std_logic;
+        btn_clear:  in  std_logic;
         switch:     in  std_logic_vector(7 downto 0);
-        led:        out std_logic_vector(7 downto 0);
-        spw_di_p:   in  std_logic;
-        spw_di_n:   in  std_logic;
-        spw_si_p:   in  std_logic;
-        spw_si_n:   in  std_logic;
-        spw_do_p:   out std_logic;
-        spw_do_n:   out std_logic;
-        spw_so_p:   out std_logic;
-        spw_so_n:   out std_logic );
+        led:        out std_logic_vector(3 downto 0);
+        spw_rxdp:   in  std_logic;
+        spw_rxdn:   in  std_logic;
+        spw_rxsp:   in  std_logic;
+        spw_rxsn:   in  std_logic;
+        spw_txdp:   out std_logic;
+        spw_txdn:   out std_logic;
+        spw_txsp:   out std_logic;
+        spw_txsn:   out std_logic );
 
 end entity streamtest_top;
 
@@ -78,6 +83,7 @@ architecture streamtest_top_arch of streamtest_top is
     signal s_autostart:     std_logic := '0';
     signal s_linkdisable:   std_logic := '0';
     signal s_senddata:      std_logic := '0';
+    signal s_sendtick:      std_logic := '0';
     signal s_txdivcnt:      std_logic_vector(7 downto 0) := "00000000";
     signal s_linkstarted:   std_logic;
     signal s_linkconnecting: std_logic;
@@ -133,14 +139,14 @@ architecture streamtest_top_arch of streamtest_top is
 begin
 
     -- Buffer incoming clock.
-    bufg0: BUFG port map ( I => clk50, O => boardclk );
+    bufg0: BUFG port map ( I => clk, O => boardclk );
 
     -- Generate 60 MHz system clock.
     dcm0: DCM
         generic map (
             CLKFX_DIVIDE        => 5,
             CLKFX_MULTIPLY      => 6,
-            CLK_FEEDBACK      => "NONE",
+            CLK_FEEDBACK        => "NONE",
             CLKIN_DIVIDE_BY_2   => false,
             CLKIN_PERIOD        => 20.0,
             CLKOUT_PHASE_SHIFT  => "NONE",
@@ -191,7 +197,7 @@ begin
             autostart   => s_autostart,
             linkdisable => s_linkdisable,
             senddata    => s_senddata,
-            sendtick    => s_senddata,
+            sendtick    => s_sendtick,
             txdivcnt    => s_txdivcnt,
             linkstarted => s_linkstarted,
             linkconnecting => s_linkconnecting,
@@ -208,31 +214,32 @@ begin
     -- LVDS buffers
     spwdi_pad: IBUFDS
         generic map ( IOSTANDARD => "LVDS_25" )
-        port map ( O => s_spwdi, I => spw_di_p, IB => spw_di_n );
+        port map ( O => s_spwdi, I => spw_rxdp, IB => spw_rxdn );
     spwsi_pad: IBUFDS
         generic map ( IOSTANDARD => "LVDS_25" )
-        port map ( O => s_spwsi, I => spw_si_p, IB => spw_si_n );
+        port map ( O => s_spwsi, I => spw_rxsp, IB => spw_rxsn );
     spwdo_pad: OBUFDS
         generic map ( IOSTANDARD => "LVDS_25" )
-        port map ( O => spw_do_p, OB => spw_do_n, I => s_spwdo );
+        port map ( O => spw_txdp, OB => spw_txdn, I => s_spwdo );
     spwso_pad: OBUFDS
         generic map ( IOSTANDARD => "LVDS_25" )
-        port map ( O => spw_so_p, OB => spw_so_n, I => s_spwso );
+        port map ( O => spw_txsp, OB => spw_txsn, I => s_spwso );
 
     process (sysclk) is
     begin
         if rising_edge(sysclk) then
 
             -- Synchronize buttons
-            s_resetbtn  <= button(0);
+            s_resetbtn  <= btn_reset;
             s_rst       <= s_resetbtn;
-            s_clearbtn  <= button(1);
+            s_clearbtn  <= btn_clear;
 
             -- Synchronize switch settings
-            s_autostart <= switch(0);
-            s_linkstart <= switch(1);
-            s_linkdisable <= switch(2);
-            s_senddata  <= switch(3);
+            s_autostart <= '0';
+            s_linkstart <= switch(0);
+            s_linkdisable <= switch(1);
+            s_senddata  <= switch(2);
+            s_sendtick  <= switch(3);
             s_txdivcnt(3 downto 0) <= switch(7 downto 4);
 
             -- Sticky link error LED
@@ -240,15 +247,11 @@ begin
                               (not s_clearbtn) and
                               (not s_resetbtn);
 
-            -- Drive LEDs
-            led(0)  <= s_linkstarted;
-            led(1)  <= s_linkconnecting;
-            led(2)  <= s_linkrun;
-            led(3)  <= s_linkerrorled;
-            led(4)  <= s_gotdata;
-            led(5)  <= '0';
-            led(6)  <= s_dataerror;
-            led(7)  <= s_tickerror;
+            -- Drive LEDs (inverted logic)
+            led(0)  <= not s_linkrun;
+            led(1)  <= not s_linkerrorled;
+            led(2)  <= not s_gotdata;
+            led(3)  <= not (s_dataerror or s_tickerror);
 
         end if;
     end process;
