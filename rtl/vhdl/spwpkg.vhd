@@ -116,7 +116,6 @@ package spwpkg is
         -- byte. Valid when "rxchar" is high.
         rxflag:     std_logic;
 
-
         -- Received byte, or "00000000" for EOP or "00000001" for EEP.
         -- Valid when "rxchar" is high.
         rxdata:     std_logic_vector(7 downto 0);

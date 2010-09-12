@@ -112,6 +112,10 @@ begin
                 -- Wait for 2 timer periods.
                 if ((recvo.errdisc or recvo.errpar or recvo.erresc) = '1') or
                    ((recvo.gotfct or recvo.tick_out or recvo.rxchar) = '1') then
+                    -- Note: spwrecv will never issue errpar, erresc, gotfct,
+                    -- tick_out or rxchar before the first NULL has been seen.
+                    -- Therefore it's ok here to bail on those conditions
+                    -- without explicitly testing got_null.
                     v.state     := S_ErrorReset;    -- error, go back to reset
                     v_timerrst  := '1';
                 elsif r.timercnt = 0 then

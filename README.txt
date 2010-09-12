@@ -37,6 +37,28 @@ Future plans:
  * try to run on Virtex
 
 
+Version history
+---------------
+
+2010-09-12
+ * Fixed issue with automatic discarding of TX data after link error.
+ * After link error, spwstream will terminate current packet with EEP even
+   if the linkdisable signal is active.
+ * Added code comment to clarify a dependency between spwrecv and spwlink.
+   (Thanks to Rafael Corsi Ferrao for reporting this obscurity.)
+
+2010-07-12
+ * Added manual.
+ * Fix incorrect bitrate during link handshake. The system clock frequency
+   was used to compute the initial tx clock divider, even when the clock
+   divider would act on the txclk instead of the system clock.
+ * Improve fast transmitter. Sending FCT tokens at high bit rate no longer
+   causes insertion of a NULL token.
+
+2010-06-08
+ * Initial release.
+
+
 Contact
 -------
 

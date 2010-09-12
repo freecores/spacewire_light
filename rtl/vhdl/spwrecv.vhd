@@ -133,6 +133,7 @@ begin
 
                 if v.bitcnt(0) = '1' then
                     -- received new token
+                    -- note that this will not happen before null_seen='1'
                     if (v.parity xor v_inbit) = '0' then
                         -- Parity check failed.
                         v.errpar    := '1';

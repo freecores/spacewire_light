@@ -408,9 +408,8 @@ begin
             v.txpacket  := '0';
         end if;
 
-        -- Clear the discard flags when the link is explicitly disabled.
+        -- Clear the discard flag when the link is explicitly disabled.
         if linkdis = '1' then
-            v.rxeep     := '0';
             v.txdiscard := '0';
         end if;
 
@@ -458,7 +457,7 @@ begin
         -- (use new value of txfifo_raddr)
         v.txfifo_rvalid := bool_to_logic(v.txfifo_raddr /= r.txfifo_waddr);
 
-        -- Update room in TX fifo (use new value of both txfifo_waddr).
+        -- Update room in TX fifo (use new value of txfifo_waddr).
         v_tmptxroom := unsigned(r.txfifo_raddr) - unsigned(v.txfifo_waddr) - 1;
         v.txfull    := bool_to_logic(v_tmptxroom = 0);
         v.txhalff   := not v_tmptxroom(v_tmptxroom'high);
@@ -466,8 +465,8 @@ begin
         -- If an error occurs, set a flag to discard the current packet.
         if (linko.errdisc or linko.errpar or
             linko.erresc or linko.errcred) = '1' then
-            v.rxeep     := v.rxeep or v.rxpacket;   -- use new value of rxpacket
-            v.txdiscard := v.txdiscard or r.txpacket;
+            v.rxeep     := v.rxeep or v.rxpacket;       -- use new value of rxpacket
+            v.txdiscard := v.txdiscard or v.txpacket;   -- use new value of txpacket
             v.rxpacket  := '0';
             v.txpacket  := '0';
         end if;
