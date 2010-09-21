@@ -402,16 +402,6 @@ begin
             -- send character
             v.txpacket  := not s_txfifo_rdata(8);
         end if;
-        if linko.running = '0' then
-            -- not connected
-            v.rxpacket  := '0';
-            v.txpacket  := '0';
-        end if;
-
-        -- Clear the discard flag when the link is explicitly disabled.
-        if linkdis = '1' then
-            v.txdiscard := '0';
-        end if;
 
         -- Update RX fifo pointers.
         if (rxread = '1') and (r.rxfifo_rvalid = '1') then
@@ -462,13 +452,17 @@ begin
         v.txfull    := bool_to_logic(v_tmptxroom = 0);
         v.txhalff   := not v_tmptxroom(v_tmptxroom'high);
  
-        -- If an error occurs, set a flag to discard the current packet.
-        if (linko.errdisc or linko.errpar or
-            linko.erresc or linko.errcred) = '1' then
+        -- If the link is lost, set a flag to discard the current packet.
+        if linko.running = '0' then
             v.rxeep     := v.rxeep or v.rxpacket;       -- use new value of rxpacket
             v.txdiscard := v.txdiscard or v.txpacket;   -- use new value of txpacket
             v.rxpacket  := '0';
             v.txpacket  := '0';
+        end if;
+
+        -- Clear the discard flag when the link is explicitly disabled.
+        if linkdis = '1' then
+            v.txdiscard := '0';
         end if;
 
         -- Drive control signals to RX fifo.
