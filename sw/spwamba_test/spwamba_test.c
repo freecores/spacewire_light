@@ -11,7 +11,7 @@
  * The following defines are set in the Makefile:
  *   TXCLKFREQ        TX base clock frequency in MHz
  *   DESCTABLESIZE    Size of descriptor table as 2-log of nr of descriptors
- *   QUEUEFILL        Number of bytes to almost fill up TX and RX queues
+ *   QUEUEFILL        Number of bytes needed to ALMOST fill up TX and RX queues
  *   LOOPBACKSWITCH   1 if the spacewire loopback can be switched through UART RX enable
  */
 

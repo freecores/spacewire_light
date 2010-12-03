@@ -21,18 +21,19 @@ with the SpaceWire Light package. If not, see <http://www.gnu.org/licenses/>.
 Overview
 --------
 
-SpaceWire Light is a SpaceWire encoder-decoder with FIFO interface.
+SpaceWire Light is a SpaceWire encoder-decoder.
 It is synthesizable for FPGA targets (up to 200 Mbit on Spartan-3).
+Application interfaces include a simple FIFO interface, as well as
+an AMBA bus interface for LEON3 system-on-chip designs.
 
 The goal is to provide a complete, reliable, fast implementation
-of a SpaceWire encoder-decoder according to ECSS-E-50-12C.
+of a SpaceWire encoder-decoder according to ECSS-E-ST-50-12C.
 The core is "light" in the sense that it does not provide additional
 features such as RMAP, routing etc.
 
 See doc/Manual.pdf for more information.
 
 Future plans:
- * testing and documentation of AMBA bus interface
  * redesign fast receiver to improve performance
  * add support for Xilinx Virtex platform
 
@@ -40,7 +41,17 @@ Future plans:
 Version history
 ---------------
 
-2010-19-21
+2010-12-03
+ * Add RTEMS driver and test program for SPWAMBA.
+ * Add documentation for SPWAMBA.
+ * spwamba: Change TX FIFO management; start new transfer when there is room
+   for a maximum burst instead of aiming for 3/4 fill rate.
+ * spwamba: Do not reset spwxmit in response to software reset.
+ * spwamba: Fix bug in maximum burst size calculation.
+ * spwamba: Optimize address generation in burst state machine.
+ * spwamba: More careful calculation of RX credit.
+
+2010-09-21
  * Add AMBA interface (preliminary version, untested, undocumented).
  * License changed from LGPL to GPL.
  * Again fix an issue with EEP injection on link loss.

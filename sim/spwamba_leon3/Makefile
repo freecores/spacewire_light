@@ -11,7 +11,7 @@ RTLDIR = ../../rtl/vhdl
 TBDIR  = ../../bench/vhdl
 SWDIR  = ../../sw/spwamba_test
 
-SWDEFS = -DTXCLKFREQ=40 -DDESCTABLESIZE=5 -DQUEUEFILL=672 -DLOOPBACKSWITCH=1
+SWDEFS = -DTXCLKFREQ=40 -DDESCTABLESIZE=5 -DQUEUEFILL=700 -DLOOPBACKSWITCH=1
 
 TOP = spwamba_tb
 VHDLSIMFILES = \
@@ -42,8 +42,6 @@ all:
 	@echo " make spwamba_test.srec    : compile test software (requires sparc-elf-4.4.2)"
 	@echo " make ghdl-launch          : run test software in test bench"
 	@echo
-
-ghdl-run ghdl-launch: spwamba_test.srec
 
 spwamba_test.srec: spwamba_test.elf
 	sparc-elf-objcopy -O srec $< $@

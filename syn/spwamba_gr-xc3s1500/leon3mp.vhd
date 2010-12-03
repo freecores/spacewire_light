@@ -45,8 +45,16 @@ library unisim;
 use unisim.vcomponents.DCM;
 
 use work.config.all;
+
+-- These statements are used in case SpaceWire Light is synthesized locally,
+-- separate from the rest of GRLIB.
 use work.spwpkg.all;
 use work.spwambapkg.all;
+---- The following statements should be used instead if SpaceWire Light
+---- has been integrated into GRLIB.
+-- library opencores;
+-- use opencores.spwpkg.all;
+-- use opencores.spwambapkg.all;
 
 entity leon3mp is
   generic (

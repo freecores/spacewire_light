@@ -8,7 +8,7 @@
 # In that case the program is built by sim/spwamba_leon3/Makefile.
 #
 
-SWDEFS = -DTXCLKFREQ=200 -DDESCTABLESIZE=10 -DQUEUEFILL=1760 -DLOOPBACKSWITCH=0
+SWDEFS = -DTXCLKFREQ=200 -DDESCTABLESIZE=10 -DQUEUEFILL=1980 -DLOOPBACKSWITCH=0
 
 CC = sparc-elf-gcc
 CFLAGS = -msoft-float -Wall -Os

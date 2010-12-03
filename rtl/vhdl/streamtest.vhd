@@ -4,7 +4,7 @@
 --  This entity implements one spwstream instance with SpaceWire signals
 --  routed to external ports. The SpaceWire port is assumed to be looped back
 --  to itself externally, either directly (tx pins wired to rx pins) or
---  through a foreigh SpaceWire device which is programmed to echo anything
+--  through a remote SpaceWire device which is programmed to echo anything
 --  it receives.
 --
 --  This entity submits a series of test patterns to the transmit side of

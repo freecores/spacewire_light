@@ -310,15 +310,16 @@ architecture spwamba_arch of spwamba is
     signal recv_inact:      std_logic;
     signal recv_inbvalid:   std_logic;
     signal recv_inbits:     std_logic_vector(rxchunk-1 downto 0);
+    signal xmit_rst:        std_logic;
     signal xmiti:           spw_xmit_in_type;
     signal xmito:           spw_xmit_out_type;
     signal xmit_divcnt:     std_logic_vector(7 downto 0);
+    signal link_rst:        std_logic;
     signal linki:           spw_link_in_type;
     signal linko:           spw_link_out_type;
     signal msti:            spw_ahbmst_in_type;
     signal msto:            spw_ahbmst_out_type;
     signal ahbmst_rstn:     std_logic;
-    signal s_rst:           std_logic;
 
     -- Memory interface signals.
     signal s_rxfifo_raddr:  std_logic_vector(rxfifosize-1 downto 0);
@@ -352,7 +353,7 @@ begin
             reset_time  => reset_time )
         port map (
             clk         => clk,
-            rst         => s_rst,
+            rst         => link_rst,
             linki       => linki,
             linko       => linko,
             rxen        => recv_rxen,
@@ -405,7 +406,7 @@ begin
         xmit_inst: spwxmit
             port map (
                 clk     => clk,
-                rst     => s_rst,
+                rst     => xmit_rst,
                 divcnt  => xmit_divcnt,
                 xmiti   => xmiti,
                 xmito   => xmito,
@@ -417,7 +418,7 @@ begin
             port map (
                 clk     => clk,
                 txclk   => txclk,
-                rst     => s_rst,
+                rst     => xmit_rst,
                 divcnt  => xmit_divcnt,
                 xmiti   => xmiti,
                 xmito   => xmito,
@@ -596,7 +597,10 @@ begin
             v.rxroom    := "111111";
         else
             -- less than 64 bytes room.
-            v.rxroom    := std_logic_vector(v_tmprxroom(5 downto 0));
+            -- If linko.rxchar = '1', decrease rxroom by one to account for
+            -- the pipeline delay through r.rxfifo_write.
+            v.rxroom    := std_logic_vector(v_tmprxroom(5 downto 0) - 
+                             to_unsigned(conv_integer(linko.rxchar), 6));
         end if;
 
         -- Update TX fifo write pointer.
@@ -616,10 +620,19 @@ begin
             v.txfifo_nxfull := msto.txfifo_write;
         end if;
 
-        -- Detect TX fifo more than 3/4 full.
-        if unsigned(r.txfifo_raddr) - unsigned(r.txfifo_waddr) = to_unsigned(2**(txfifosize-2), txfifosize) then
-            -- currently exactly 3/4 full.
-            v.txfifo_highw  := msto.txfifo_write;
+        -- Detect TX fifo high water mark.
+        if txfifosize > maxburst then
+            -- Indicate high water when there is no room for a maximum burst.
+            if unsigned(r.txfifo_raddr) - unsigned(r.txfifo_waddr) = to_unsigned(2**maxburst + 1, txfifosize) then
+                -- currently room for exactly one maximum burst.
+                v.txfifo_highw  := msto.txfifo_write;
+            end if;
+        else
+            -- Indicate high water when more than half full.
+            if unsigned(r.txfifo_raddr) - unsigned(r.txfifo_waddr) = to_unsigned(2**(txfifosize-1), txfifosize) then
+                -- currently exactly half full.
+                v.txfifo_highw  := msto.txfifo_write;
+            end if;
         end if;
 
         -- Update descriptor pointers.
@@ -827,7 +840,8 @@ begin
 
         -- Reset components.
         ahbmst_rstn     <= rstn and (not r.ctl_reset) and (not r.ctl_resetdma);
-        s_rst           <= (not rstn) or r.ctl_reset;
+        link_rst        <= (not rstn) or r.ctl_reset;
+        xmit_rst        <= not rstn;
 
         -- Clear TX fifo on cancel request.
         if r.ctl_txcancel = '1' then

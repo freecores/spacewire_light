@@ -335,7 +335,7 @@ begin
                         v.mstate    := st_rxfinal;
                     end if;
                     -- Stop at max burst length boundary.
-                    if (andv(r.rxaddr(maxburst+2 downto 2)) = '1') then
+                    if (andv(r.rxaddr(maxburst+1 downto 2)) = '1') then
                         v_burstreq  := '0';
                         v.mstate    := st_rxfinal;
                     end if;
@@ -438,7 +438,7 @@ begin
                     v.txdes_len := std_logic_vector(unsigned(r.txdes_len) - 4);
                     v.txaddr    := std_logic_vector(unsigned(r.txaddr) + 1);
                     -- Handle end of burst/transfer.
-                    if andv(r.txaddr(maxburst+2 downto 2)) = '1' then
+                    if andv(r.txaddr(maxburst+1 downto 2)) = '1' then
                         -- This was the last data cycle before the max burst boundary.
                         -- Go through st_idle to pick up more work.
                         v_burstreq  := '0';
@@ -451,12 +451,12 @@ begin
                         -- Stop at end of requested length (one more data cycle).
                         v_burstreq  := '0';
                         v.mstate    := st_txfinal;
-                    elsif andv(r.txaddr(maxburst+2 downto 3)) = '1' then
+                    elsif andv(r.txaddr(maxburst+1 downto 3)) = '1' then
                         -- Stop at max burst length boundary (one more data cycle).
                         v_burstreq  := '0';
                     end if;
                 else
-                    if andv(r.txaddr(maxburst+2 downto 2)) = '1' then
+                    if andv(r.txaddr(maxburst+1 downto 2)) = '1' then
                         -- Stop at max burst length boundary (just one more data cycle).
                         v_burstreq  := '0';
                     end if;
@@ -597,7 +597,7 @@ begin
                 v.hbusreq   := '1';
                 if ahbi.hready = '1' then
                     -- Increment address and continue burst in bs_active.
-                    v.haddr     := std_logic_vector(unsigned(r.haddr) + 1);
+                    v.haddr(maxburst+1 downto 2) := std_logic_vector(unsigned(r.haddr(maxburst+1 downto 2)) + 1);
                     v.burststat := bs_active;
                     -- Stop burst when application ends the transfer.
                     v.hbusreq   := v_burstreq;
@@ -616,7 +616,7 @@ begin
                 v.hbusreq   := '1';
                 if ahbi.hresp /= HRESP_OKAY then
                     -- Error response from slave.
-                    v.haddr     := std_logic_vector(unsigned(r.haddr) - 1);
+                    v.haddr(maxburst+1 downto 2) := std_logic_vector(unsigned(r.haddr(maxburst+1 downto 2)) - 1);
                     if ahbi.hresp = HRESP_ERROR then
                         -- Permanent error.
                         v.ahberror  := '1';
@@ -628,7 +628,7 @@ begin
                     v.burststat := bs_idle;
                 elsif ahbi.hready = '1' then
                     -- Increment address.
-                    v.haddr     := std_logic_vector(unsigned(r.haddr) + 1);
+                    v.haddr(maxburst+1 downto 2) := std_logic_vector(unsigned(r.haddr(maxburst+1 downto 2)) + 1);
                     -- Stop burst when application ends the transfer.
                     v.hbusreq   := v_burstreq;
                     if v_burstreq = '0' then
@@ -646,7 +646,7 @@ begin
                 v.hbusreq   := r.hbusreq or v_burstreq;
                 if ahbi.hresp /= HRESP_OKAY then
                     -- Error response from slave.
-                    v.haddr     := std_logic_vector(unsigned(r.haddr) - 1);
+                    v.haddr(maxburst+1 downto 2) := std_logic_vector(unsigned(r.haddr(maxburst+1 downto 2)) - 1);
                     if ahbi.hresp = HRESP_ERROR then
                         -- Permanent error.
                         v.ahberror  := '1';
