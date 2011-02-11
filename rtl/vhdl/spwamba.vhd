@@ -165,6 +165,9 @@ entity spwamba is
         -- Pulse for TimeCode generation.
         tick_in:    in  std_logic;
 
+        -- High for one clock cycle if a TimeCode was just received.
+        tick_out:   out std_logic;
+
         -- Data In signal from SpaceWire bus.
         spw_di:     in  std_logic;
 
@@ -557,7 +560,7 @@ begin
                 s_txfifo_rdata(23-8*v_txfifo_bytepos) = '1') then
                 -- This is the last byte in the current word;
                 -- OR the current byte is an EOP/EEP marker;
-                -- OR the next byte in the current work is a non-EOP end-of-frame marker.
+                -- OR the next byte in the current word is a non-EOP end-of-frame marker.
                 v.txfifo_bytepos := "00";
                 v.txfifo_raddr  := std_logic_vector(unsigned(r.txfifo_raddr) + 1);
             else
@@ -830,6 +833,9 @@ begin
         msti.rxfifo_nxempty <= v.rxfifo_empty;  -- new value of rxfifo_empty
         msti.txfifo_nxfull  <= r.txfifo_nxfull;
         msti.txfifo_highw   <= r.txfifo_highw;
+
+        -- Pass tick_out signal to output port.
+        tick_out        <= linko.tick_out;
 
         -- Drive APB output signals.
         apbo.prdata     <= v_prdata;

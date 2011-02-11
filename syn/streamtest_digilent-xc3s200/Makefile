@@ -27,7 +27,8 @@ VHDL_SOURCES = streamtest_top.vhd \
                $(RTLDIR)/spwxmit.vhd \
                $(RTLDIR)/spwxmit_fast.vhd \
                $(RTLDIR)/spwrecvfront_generic.vhd \
-               $(RTLDIR)/spwrecvfront_fast.vhd
+               $(RTLDIR)/spwrecvfront_fast.vhd \
+               $(RTLDIR)/syncdff.vhd
 
 # Device type: Spartan-3 200 on Digilent board
 
@@ -53,7 +54,7 @@ OPT_INTSTYLE = -intstyle ise
 .PHONY : default clean bitfile
 
 clean :
-	$(RM) -rf *~ work dump.xst _ngo 'file graph' xlnx_auto_0_xdb
+	$(RM) -rf *~ work dump.xst _ngo 'file graph' xlnx_auto_0_xdb _xmsgs
 	$(RM) $(PROJ).xst-script
 	$(RM) $(PROJ).lso $(PROJ).prj
 	$(RM) $(PROJ).ngc $(PROJ).xst.log $(PROJ).syr $(PROJ).srp $(PROJ).ngr
@@ -63,6 +64,7 @@ clean :
 	$(RM) $(PROJ).ncd $(PROJ).pad $(PROJ).par $(PROJ).xpi $(PROJ)_pad.csv $(PROJ)_pad.txt
 	$(RM) $(PROJ).bit $(PROJ).bgn $(PROJ).drc
 	$(RM) $(PROJ).ptwx $(PROJ).unroutes *.xrpt $(PROJ)_summary.xml $(PROJ)_usage.xml $(PROJ)_map.map
+	$(RM) $(PROJ)_bitgen.xwbt usage_statistics_webtalk.html webtalk.log
 
 bitfile : $(PROJ).bit
 

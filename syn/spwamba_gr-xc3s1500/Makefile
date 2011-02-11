@@ -5,7 +5,7 @@
 -include .config
 
 # Change this to your local GRLIB directory.
-GRLIB = /data/leon3/grlib-gpl-1.0.22-b4095
+GRLIB = /data/leon3/grlib-gpl-1.1.0-b4104
 
 TOP=leon3mp
 BOARD=gr-xc3s-1500
@@ -37,6 +37,8 @@ VHDLSYNFILES = config.vhd leon3mp.vhd \
   $(RTLDIR)/spwxmit_fast.vhd \
   $(RTLDIR)/spwrecvfront_generic.vhd \
   $(RTLDIR)/spwrecvfront_fast.vhd \
+  $(RTLDIR)/syncdff.vhd \
+  $(RTLDIR)/spwram.vhd \
   $(RTLDIR)/spwambapkg.vhd  \
   $(RTLDIR)/spwamba.vhd     \
   $(RTLDIR)/spwahbmst.vhd   \

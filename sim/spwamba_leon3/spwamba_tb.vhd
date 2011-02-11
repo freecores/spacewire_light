@@ -200,6 +200,7 @@ begin
             ahbi    => ahbmi,
             ahbo    => ahbmo(1),
             tick_in => spw_tick_in,
+            tick_out => open,
             spw_di  => spw_di,
             spw_si  => spw_si,
             spw_do  => spw_do,

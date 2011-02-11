@@ -466,6 +466,13 @@ begin
                 while input_pattern = 8 loop
                     genesc; genfct;
                 end loop;
+            elsif input_pattern = 9 then
+                -- FCT, FCT, NULLs
+                genfct;
+                genfct;
+                while input_pattern = 9 loop
+                    genesc; genfct;
+                end loop;
             else
                 assert false;
             end if;
@@ -659,10 +666,10 @@ begin
             report " 8. autostart (wait)";
         output_collect <= '1';
         input_pattern <= 1;
-        wait on started, connecting, running for 200 ns + 20 * inbit_period;
+        wait on started, connecting, running for 200 ns + 24 * inbit_period;
         assert (started = '1') and (connecting = '0') and (running = '0')
             report " 8. autostart (Started)";
-        input_pattern <= 2;
+        input_pattern <= 9;
         wait on started, connecting, running for 1 us;
         assert (started = '0') and (connecting = '1') and (running = '0')
             report " 8. autostart (Connecting)";
@@ -701,11 +708,11 @@ begin
             report " 9. running_disconnect (Started)";
         linkstart <= '0';
         wait until rising_edge(sysclk);
-        input_pattern <= 2;
+        input_pattern <= 9;
         wait on started, connecting, running, errany for 20 * inbit_period;
         assert (started = '0') and (connecting = '1') and (running = '0') and (errany = '0')
             report " 9. running_disconnect (Connecting)";
-        wait on started, connecting, running, errany for 150 ns + 24 * inbit_period;
+        wait on started, connecting, running, errany for 200 ns + 24 * inbit_period;
         assert (started = '0') and (connecting = '0') and (running = '1') and (errany = '0')
             report " 9. running_disconnect (Run)";
         input_pattern <= 0;

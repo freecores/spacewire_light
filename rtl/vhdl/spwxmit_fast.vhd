@@ -38,9 +38,8 @@
 --  into a stream of tokens. The tokens are pushed to the txclk domain through
 --  the FIFO buffer as described above.
 --
---  The data path through the txclk domain is divided into stages A through F
---  in a half-hearted attempt to keep things simple. Stage A is just a
---  synchronizer for the buffer status flags from the system clock domain.
+--  The data path through the txclk domain is divided into stages B through F
+--  in a half-hearted attempt to keep things simple.
 --
 --  Stage B takes a token from the FIFO buffer and updates a buffer status
 --  flag to indicate that the buffer slot needs to be refilled. If the FIFO
@@ -184,10 +183,6 @@ entity spwxmit_fast is
     attribute FSM_EXTRACT: string;
     attribute FSM_EXTRACT of spwxmit_fast: entity is "NO";
 
-    -- Turn off register duplication to avoid synchronization problems.
-    attribute REGISTER_DUPLICATION: string;
-    attribute REGISTER_DUPLICATION of spwxmit_fast: entity is "FALSE";
-
 end entity spwxmit_fast;
 
 architecture spwxmit_fast_arch of spwxmit_fast is
@@ -210,9 +205,6 @@ architecture spwxmit_fast_arch of spwxmit_fast is
         -- sync to system clock domain
         txflip0:    std_ulogic;
         txflip1:    std_ulogic;
-        -- stage A
-        a_sysflip0: std_logic_vector(1 downto 0);
-        a_sysflip1: std_logic_vector(1 downto 0);
         -- stage B
         b_update:   std_ulogic;
         b_mux:      std_ulogic;
@@ -245,9 +237,6 @@ architecture spwxmit_fast_arch of spwxmit_fast is
         txclkdone:  std_logic_vector(1 downto 0);
         txclkdiv:   std_logic_vector(7 downto 0);
         txdivnorm:  std_ulogic;
-        txdivsafe:  std_logic_vector(1 downto 0);
-        -- tx enable logic
-        txensync:   std_logic_vector(1 downto 0);
     end record;
 
     -- Registers in system clock domain
@@ -264,9 +253,6 @@ architecture spwxmit_fast_arch of spwxmit_fast is
         token0:     token_type;
         token1:     token_type;
         tokmux:     std_ulogic;
-        -- sync feedback from txclk domain
-        txflip0:    std_logic_vector(1 downto 0);
-        txflip1:    std_logic_vector(1 downto 0);
         -- transmitter management
         pend_fct:   std_ulogic;                     -- '1' if an outgoing FCT is pending
         pend_char:  std_ulogic;                     -- '1' if an outgoing N-Char is pending
@@ -296,8 +282,6 @@ architecture spwxmit_fast_arch of spwxmit_fast is
         token0      => token_reset,
         token1      => token_reset,
         tokmux      => '0',
-        txflip0     => "00",
-        txflip1     => "00",
         pend_fct    => '0',
         pend_char   => '0',
         pend_data   => (others => '0'),
@@ -307,15 +291,30 @@ architecture spwxmit_fast_arch of spwxmit_fast is
         allow_char  => '0',
         sent_fct    => '0' );
 
+    -- Signals that are re-synchronized from system clock to txclk domain.
+    type synctx_type is record
+        rstn:       std_ulogic;
+        sysflip0:   std_ulogic;
+        sysflip1:   std_ulogic;
+        txen:       std_ulogic;
+        txdivsafe:  std_ulogic;
+    end record;
+
+    -- Signals that are re-synchronized from txclk to system clock domain.
+    type syncsys_type is record
+        txflip0:    std_ulogic;
+        txflip1:    std_ulogic;
+    end record;
+
     -- Registers
     signal rtx:     txregs_type;
     signal rtxin:   txregs_type;
     signal r:       regs_type := regs_reset;
     signal rin:     regs_type;
 
-    -- Reset synchronizer for txclk domain
-    signal s_tx_rst_sync: std_logic_vector(1 downto 0) := "11";
-    signal s_tx_reset:    std_ulogic := '1';
+    -- Synchronized signals after crossing clock domains.
+    signal synctx:  synctx_type;
+    signal syncsys: syncsys_type;
 
     -- Output flip-flops
     signal s_spwdo: std_logic;
@@ -328,12 +327,32 @@ architecture spwxmit_fast_arch of spwxmit_fast is
 
 begin
 
+    -- Reset synchronizer for txclk domain.
+    synctx_rst: syncdff
+        port map ( clk => txclk, rst => rst, di => '1',         do => synctx.rstn );
+
+    -- Synchronize signals from system clock domain to txclk domain.
+    synctx_sysflip0: syncdff
+        port map ( clk => txclk, rst => rst, di => r.sysflip0,  do => synctx.sysflip0 );
+    synctx_sysflip1: syncdff
+        port map ( clk => txclk, rst => rst, di => r.sysflip1,  do => synctx.sysflip1 );
+    synctx_txen: syncdff
+        port map ( clk => txclk, rst => rst, di => r.txenreg,   do => synctx.txen );
+    synctx_txdivsafe: syncdff
+        port map ( clk => txclk, rst => rst, di => r.txdivsafe, do => synctx.txdivsafe );
+
+    -- Synchronize signals from txclk domain to system clock domain.
+    syncsys_txflip0: syncdff
+        port map ( clk => clk,   rst => rst, di => rtx.txflip0, do => syncsys.txflip0 );
+    syncsys_txflip1: syncdff
+        port map ( clk => clk,   rst => rst, di => rtx.txflip1, do => syncsys.txflip1 );
+
     -- Drive SpaceWire output signals
     spw_do      <= s_spwdo;
     spw_so      <= s_spwso;
 
     -- Combinatorial process
-    process (r, rtx, rst, divcnt, xmiti, s_tx_reset) is
+    process (r, rtx, rst, divcnt, xmiti, synctx, syncsys) is
         variable v:         regs_type;
         variable vtx:       txregs_type;
         variable v_needtoken: std_ulogic;
@@ -348,12 +367,6 @@ begin
 
         -- ---- FAST CLOCK DOMAIN ----
 
-        -- Stage A: Synchronize token buffer counts from system clock domain.
-        vtx.a_sysflip0(0) := r.sysflip0;
-        vtx.a_sysflip0(1) := rtx.a_sysflip0(0);
-        vtx.a_sysflip1(0) := r.sysflip1;
-        vtx.a_sysflip1(1) := rtx.a_sysflip1(0);
-        
         -- Stage B: Multiplex tokens from system clock domain.
         -- Update stage B three bit periods after updating stage C
         -- (i.e. in time for the next update of stage C).
@@ -368,20 +381,20 @@ begin
         if rtx.b_update = '1' then
             if rtx.b_mux = '0' then
                 -- get token from slot 0
-                vtx.b_valid := rtx.a_sysflip0(1) xor rtx.b_txflip;
+                vtx.b_valid := synctx.sysflip0 xor rtx.b_txflip;
                 vtx.b_token := r.token0;
                 -- update mux flag if we got a valid token
-                vtx.b_mux   := rtx.a_sysflip0(1) xor rtx.b_txflip;
-                vtx.txflip0 := rtx.a_sysflip0(1);
+                vtx.b_mux   := synctx.sysflip0 xor rtx.b_txflip;
+                vtx.txflip0 := synctx.sysflip0;
                 vtx.txflip1 := rtx.txflip1;
             else
                 -- get token from slot 1
-                vtx.b_valid := rtx.a_sysflip1(1) xor rtx.b_txflip;
+                vtx.b_valid := synctx.sysflip1 xor rtx.b_txflip;
                 vtx.b_token := r.token1;
                 -- update mux flag if we got a valid token
-                vtx.b_mux   := not (rtx.a_sysflip1(1) xor rtx.b_txflip);
+                vtx.b_mux   := not (synctx.sysflip1 xor rtx.b_txflip);
                 vtx.txflip0 := rtx.txflip0;
-                vtx.txflip1 := rtx.a_sysflip1(1);
+                vtx.txflip1 := synctx.sysflip1;
             end if;
         end if;
 
@@ -497,19 +510,13 @@ begin
         end if;
 
         -- Synchronize txclkdiv
-        vtx.txdivsafe(0) := r.txdivsafe;
-        vtx.txdivsafe(1) := rtx.txdivsafe(0);
-        if rtx.txdivsafe(1) = '1' then
+        if synctx.txdivsafe = '1' then
             vtx.txclkdiv  := r.txdivreg;
             vtx.txdivnorm := r.txdivnorm;
         end if;
 
-        -- Synchronize txen signal.
-        vtx.txensync(0) := r.txenreg;
-        vtx.txensync(1) := rtx.txensync(0);
-
         -- Transmitter disabled.
-        if rtx.txensync(1) = '0' then
+        if synctx.txen = '0' then
             vtx.txflip0   := '0';
             vtx.txflip1   := '0';
             vtx.b_update  := '0';
@@ -528,10 +535,9 @@ begin
         end if;
 
         -- Reset.
-        if s_tx_reset = '1' then
+        if synctx.rstn = '0' then
             vtx.f_spwdo   := '0';
             vtx.f_spwso   := '0';
-            vtx.txensync  := "00";
             vtx.txclken   := '0';
             vtx.txclkpre  := '1';
             vtx.txclkcnt  := (others => '0');
@@ -566,12 +572,6 @@ begin
             v.txenreg   := '0';
         end if;
 
-        -- Synchronize feedback from txclk domain.
-        v.txflip0(0) := rtx.txflip0;
-        v.txflip0(1) := r.txflip0(0);
-        v.txflip1(0) := rtx.txflip1;
-        v.txflip1(1) := r.txflip1(0);
-
         -- Store requests for FCT transmission.
         if xmiti.fct_in = '1' and r.allow_fct = '1' then
             v.pend_fct  := '1';
@@ -594,11 +594,11 @@ begin
 
             -- Determine if a new token is needed.
             if r.tokmux = '0' then
-                if r.sysflip0 = r.txflip0(1) then
+                if r.sysflip0 = syncsys.txflip0 then
                     v_needtoken := '1';
                 end if;
             else
-                if r.sysflip1 = r.txflip1(1) then
+                if r.sysflip1 = syncsys.txflip1 then
                     v_needtoken := '1';
                 end if;
             end if;
@@ -642,13 +642,13 @@ begin
             -- Put new token in slot.
             if v_havetoken = '1' then
                 if r.tokmux = '0' then
-                    if r.sysflip0 = r.txflip0(1) then
+                    if r.sysflip0 = syncsys.txflip0 then
                         v.sysflip0  := not r.sysflip0;
                         v.token0    := v_token;
                         v.tokmux    := '1';
                     end if;
                 else
-                    if r.sysflip1 = r.txflip1(1) then
+                    if r.sysflip1 = syncsys.txflip1 then
                         v.sysflip1  := not r.sysflip1;
                         v.token1    := v_token;
                         v.tokmux    := '0';
@@ -715,18 +715,6 @@ begin
         if rising_edge(clk) then
             -- update registers
             r <= rin;
-        end if;
-    end process;
-
-    -- Reset synchronizer for txclk domain
-    process (txclk, rst) is
-    begin
-        if rst = '1' then
-            s_tx_rst_sync <= "11";
-            s_tx_reset    <= '1';
-        elsif rising_edge(txclk) then
-            s_tx_rst_sync <= s_tx_rst_sync(0 downto 0) & "0";
-            s_tx_reset    <= s_tx_rst_sync(1);
         end if;
     end process;
 

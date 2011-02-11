@@ -679,6 +679,7 @@ begin
          ahbi    => ahbmi,
          ahbo    => ahbmo(CFG_NCPU+CFG_AHB_UART+CFG_GRETH+CFG_AHB_JTAG+CFG_SVGA_ENABLE),
          tick_in => spw_tick_in,
+         tick_out => open,
          spw_di  => spw_di,
          spw_si  => spw_si,
          spw_do  => spw_do,

@@ -233,6 +233,7 @@ begin
             s_linkstart <= switch(1);
             s_linkdisable <= switch(2);
             s_senddata  <= switch(3);
+            s_txdivcnt(7 downto 4) <= "0000";
             s_txdivcnt(3 downto 0) <= switch(7 downto 4);
 
             -- Sticky link error LED

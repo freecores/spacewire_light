@@ -1,5 +1,5 @@
 --
---  Synchronous dual-port RAM with separate clocks for read and write ports.
+--  Synchronous two-port RAM with separate clocks for read and write ports.
 --  The synthesizer for Xilinx Spartan-3 will infer Block RAM for this entity.
 --
 

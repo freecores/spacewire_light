@@ -22,10 +22,9 @@ NET "clkm" 		TNM_NET = "clkm";
 
 # Timing constraints between 200 MHz SpaceWire clock and system clock.
 NET "spw_clkl" TNM_NET = "spwclk";
-TIMESPEC "TS_spwclk_to_clkm" = FROM "spwclk" TO "clkm" 3 ns DATAPATHONLY;
-TIMESPEC "TS_clkm_to_spwclk" = FROM "clkm" TO "spwclk" 3 ns DATAPATHONLY;
-NET "clkm" MAXSKEW = 1 ns;
-NET "spw_clkl" MAXSKEW = 1 ns;
+TIMESPEC "TS_spwclk_to_clkm" = FROM "spwclk" TO "clkm" 4 ns DATAPATHONLY;
+TIMESPEC "TS_clkm_to_spwclk" = FROM "clkm" TO "spwclk" 4 ns DATAPATHONLY;
+TIMESPEC "TS_sync" = FROM FFS("*/syncdff_ff1") TO FFS("*/syncdff_ff2") 2 ns;
 
 ## Input to DCM for 200 MHz SpaceWire clock can not be optimally routed.
 PIN "spwclk0.CLKIN" CLOCK_DEDICATED_ROUTE = FALSE;

@@ -26,7 +26,8 @@ VHDL_SOURCES = spwstream_top.vhd \
                $(RTLDIR)/spwxmit.vhd \
                $(RTLDIR)/spwxmit_fast.vhd \
                $(RTLDIR)/spwrecvfront_generic.vhd \
-               $(RTLDIR)/spwrecvfront_fast.vhd
+               $(RTLDIR)/spwrecvfront_fast.vhd \
+               $(RTLDIR)/syncdff.vhd
 
 # Device type: Spartan-3 on Pender XC3S1500 board
 

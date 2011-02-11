@@ -26,11 +26,12 @@ SPWLINK_VHDL = $(RTLDIR)/spwpkg.vhd    \
                $(RTLDIR)/spwxmit.vhd   \
                $(RTLDIR)/spwxmit_fast.vhd \
                $(RTLDIR)/spwrecvfront_generic.vhd \
-               $(RTLDIR)/spwrecvfront_fast.vhd
+               $(RTLDIR)/spwrecvfront_fast.vhd \
+               $(RTLDIR)/syncdff.vhd \
+               $(RTLDIR)/spwram.vhd
 
 SPWSTREAM_VHDL = $(SPWLINK_VHDL) \
-                 $(RTLDIR)/spwstream.vhd \
-                 $(RTLDIR)/spwram.vhd
+                 $(RTLDIR)/spwstream.vhd
 
 spwlink_tb: $(TBDIR)/spwlink_tb.vhd $(SPWLINK_VHDL)
 	$(GHDL) -c $^ -e spwlink_tb

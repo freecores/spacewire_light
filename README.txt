@@ -2,7 +2,7 @@
 SpaceWire Light
 ===============
 
-Copyright 2009-2010 Joris van Rantwijk
+Copyright 2009-2011 Joris van Rantwijk
 
 SpaceWire Light is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -31,15 +31,26 @@ of a SpaceWire encoder-decoder according to ECSS-E-ST-50-12C.
 The core is "light" in the sense that it does not provide additional
 features such as RMAP, routing etc.
 
-See doc/Manual.pdf for more information.
+SpaceWire Light supports two application interfaces. One interface
+provides FIFO-style access to RX/TX buffers in the core (spwstream).
+This interface can be easily integrated into most digital designs.
 
-Future plans:
- * redesign fast receiver to improve performance
- * add support for Xilinx Virtex platform
+Alternatively, an AMBA bus interface (spwamba) may be used to integrate
+SpaceWire Light into a LEON3 embedded system. This interface supports
+DMA-based data transfers. The code for the AMBA interface deponds on GRLIB,
+a VHDL library from Aeroflex Gaisler. The source of GRLIB must be downloaded
+separately from http://www.gaisler.com/.
+
+See doc/Manual.pdf for more information.
 
 
 Version history
 ---------------
+
+2011-02-11
+ * spwamba: Add tick_out signal.
+ * swprecvfront_fast: Simplified data transfer between clock domains.
+ * Clean up synchronization of data paths between clock domains.
 
 2010-12-03
  * Add RTEMS driver and test program for SPWAMBA.

@@ -130,6 +130,7 @@ package spwambapkg is
             ahbi:       in  ahb_mst_in_type;        -- AHB master input signals
             ahbo:       out ahb_mst_out_type;       -- AHB master output signals
             tick_in:    in  std_logic;              -- pulse for timecode generation
+            tick_out:   out std_logic;              -- timecode received
             spw_di:     in  std_logic;              -- Data In signal from SpaceWire bus
             spw_si:     in  std_logic;              -- Strobe In signal from SpaceWire bus
             spw_do:     out std_logic;              -- Data Out signal to SpaceWire bus

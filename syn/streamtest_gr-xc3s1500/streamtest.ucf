@@ -5,14 +5,12 @@ NET "clk" TNM_NET = "clk" ;
 TIMESPEC "TS_clk" = PERIOD "clk" 18.0 ns ;
 
 # Paths between fastclk and sysclk must be constrained to fastclk period.
-# fastclk = 200 MHz = 5 ns nominal
-# 3 ns data path + 1 ns source skew + 1 ns destination skew = 5 ns
+# fastclk = 200 MHz = 5 ns nominal = 4 ns data path + 1 ns margin
 NET "sysclk" TNM_NET = "sysclk" ;
 NET "fastclk" TNM_NET = "fastclk" ;
-TIMESPEC "TS_fast_to_sys" = FROM "fastclk" TO "sysclk" 3 ns DATAPATHONLY ;
-TIMESPEC "TS_sys_to_fast" = FROM "sysclk" TO "fastclk" 3 ns DATAPATHONLY ;
-NET "sysclk" MAXSKEW = 1 ns ;
-NET "fastclk" MAXSKEW = 1 ns ;
+TIMESPEC "TS_fast_to_sys" = FROM "fastclk" TO "sysclk" 4 ns DATAPATHONLY ;
+TIMESPEC "TS_sys_to_fast" = FROM "sysclk" TO "fastclk" 4 ns DATAPATHONLY ;
+TIMESPEC "TS_sync" = FROM FFS("*/syncdff_ff1") TO FFS("*/syncdff_ff2") 2 ns ;
 
 # Board clock
 NET "clk"        LOC = "aa12" | IOSTANDARD = LVTTL; 

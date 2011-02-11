@@ -4,7 +4,7 @@
 
 
 # Change this to your local GRLIB directory.
-GRLIB = /data/leon3/grlib-gpl-1.0.22-b4095
+GRLIB = /data/leon3/grlib-gpl-1.1.0-b4104
 
 
 RTLDIR = ../../rtl/vhdl
@@ -22,6 +22,8 @@ VHDLSIMFILES = \
   $(RTLDIR)/spwxmit_fast.vhd \
   $(RTLDIR)/spwrecvfront_generic.vhd \
   $(RTLDIR)/spwrecvfront_fast.vhd \
+  $(RTLDIR)/syncdff.vhd     \
+  $(RTLDIR)/spwram.vhd      \
   $(RTLDIR)/spwambapkg.vhd  \
   $(RTLDIR)/spwamba.vhd     \
   $(RTLDIR)/spwahbmst.vhd   \
@@ -31,7 +33,7 @@ VHDLSIMFILES = \
 TECHLIBS = inferred
 LIBSKIP = contrib cypress eth fmf gleichmann gsi hynix micron openchip opencores spansion spw
 DIRSKIP = ata can ddr greth spacewire
-FILESKIP = i2cmst.vhd i2cmst_gen.vhd
+FILESKIP = i2cmst.vhd i2cmst_gen.vhd ahbtrace_mb.vhd
 
 include $(GRLIB)/bin/Makefile
 

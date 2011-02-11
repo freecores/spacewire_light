@@ -374,7 +374,7 @@ package spwpkg is
     end component spwrecvfront_fast;
 
 
-    -- Synchronous dual-port memory.
+    -- Synchronous two-port memory.
     component spwram is
         generic (
             abits:      integer;
@@ -389,5 +389,15 @@ package spwpkg is
             waddr:      in  std_logic_vector(abits-1 downto 0);
             wdata:      in  std_logic_vector(dbits-1 downto 0) );
     end component spwram;
+
+
+    --  Double flip-flop synchronizer.
+    component syncdff is
+        port (
+            clk:        in  std_logic;          -- clock (destination domain)
+            rst:        in  std_logic;          -- asynchronous reset, active-high
+            di:         in  std_logic;          -- input data
+            do:         out std_logic );        -- output data
+    end component syncdff;
 
 end package;
