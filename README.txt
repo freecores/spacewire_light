@@ -37,7 +37,7 @@ This interface can be easily integrated into most digital designs.
 
 Alternatively, an AMBA bus interface (spwamba) may be used to integrate
 SpaceWire Light into a LEON3 embedded system. This interface supports
-DMA-based data transfers. The code for the AMBA interface deponds on GRLIB,
+DMA-based data transfers. The code for the AMBA interface depends on GRLIB,
 a VHDL library from Aeroflex Gaisler. The source of GRLIB must be downloaded
 separately from http://www.gaisler.com/.
 
