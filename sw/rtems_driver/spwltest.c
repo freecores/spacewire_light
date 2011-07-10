@@ -819,6 +819,8 @@ int do_autotest(int verify)
                             return ret;
                     }
 
+                    if (txblocksize > packetsize && rxblocksize > packetsize)
+                        break;
                 }
             }
         }
@@ -1116,7 +1118,7 @@ void menu_recvsend(int send)
 
             blocksize = 0;
             while (send || !queued) {
-                blocksize = get_num("Block size in bytes (32 .. 16384) ?", 32, MAX_BLOCK_SIZE, 4096);
+                blocksize = get_num("Block size in bytes (1 .. 16384) ?", 1, MAX_BLOCK_SIZE, 4096);
                 if ((blocksize & 3) == 0 || !queued)
                     break;
                 printf("INVALID: block size must be a multiple of 4 in queued mode\n");
@@ -1168,7 +1170,7 @@ void menu_loopback(int verify)
             npacket = get_num("Number of packets ?", 0, 1000000, -1);
             packetsize = get_num("Packet size in bytes (1 .. 1000000) ?", 1, 1000000, -1);
             while (1) {
-                blocksize = get_num("Block size in bytes (32 .. 16384) ?", 32, MAX_BLOCK_SIZE, 4096);
+                blocksize = get_num("Block size in bytes (1 .. 16384) ?", 1, MAX_BLOCK_SIZE, 4096);
                 if ((blocksize & 3) == 0 || !queued)
                     break;
                 printf("INVALID: block size must be a multiple of 4 in queued mode\n");

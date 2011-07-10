@@ -966,7 +966,7 @@ static void test_data(void)
 
 	/* wait until second packet received */
 	v = spwamba_read(SPWAMBA_REG_STATUS);
-	for (i = 0; i < 12000 && (v & 0x800) == 0; i++)
+	for (i = 0; i < 32000 && (v & 0x800) == 0; i++)
 		v = spwamba_read(SPWAMBA_REG_STATUS);
 	CHECK_VALUE("reg_status", v, 0x7843);
 	spwamba_write(SPWAMBA_REG_STATUS, v);
@@ -997,10 +997,12 @@ static void test_data(void)
 
 	/* wait until first packet sent, then cancel tx dma */
 	v = spwamba_read(SPWAMBA_REG_STATUS);
-	for (i = 0; i < 1600 && (v & 0x1000) == 0; i++)
+	for (i = 0; i < 4000 && (v & 0x1000) == 0; i++)
 		v = spwamba_read(SPWAMBA_REG_STATUS);
 	spwamba_write(SPWAMBA_REG_CONTROL, SPWAMBA_CONTROL_TXCANCEL);
 	v = spwamba_read(SPWAMBA_REG_STATUS);
+	for (i = 0; i < 4000 && (v & 0x0040) != 0; i++)
+		v = spwamba_read(SPWAMBA_REG_STATUS);
 	CHECK_VALUE("reg_status", v, 0x1003);
 	CHECK_VALUE("txdesctable[0].f", txdesctable[0].f, 0x0c0000);
 	CHECK_VALUE("txdesctable[1].f", txdesctable[1].f, 0x150100);
@@ -1330,7 +1332,7 @@ static void test_txrate(void)
 		spwamba_write(SPWAMBA_REG_TXDMA, (unsigned int)txdesctable);
 		spwamba_write(SPWAMBA_REG_CONTROL, SPWAMBA_CONTROL_TXDMA | SPWAMBA_CONTROL_RXDMA);
 		v = spwamba_read(SPWAMBA_REG_STATUS);
-		for (i = 0; i < 8000 && (v & 0x2080) != 0x2000; i++)
+		for (i = 0; i < 16000 && (v & 0x2080) != 0x2000; i++)
 			v = spwamba_read(SPWAMBA_REG_STATUS);
 
 		usec = usec - LEON3_GpTimer_Regs->e[1].val + 1;

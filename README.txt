@@ -4,19 +4,6 @@ SpaceWire Light
 
 Copyright 2009-2011 Joris van Rantwijk
 
-SpaceWire Light is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-SpaceWire Light is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along
-with the SpaceWire Light package. If not, see <http://www.gnu.org/licenses/>.
-
 
 Overview
 --------
@@ -44,8 +31,40 @@ separately from http://www.gaisler.com/.
 See doc/Manual.pdf for more information.
 
 
+License
+-------
+
+Copyright 2009-2011 Joris van Rantwijk
+
+SpaceWire Light is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+SpaceWire Light is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with the SpaceWire Light package. If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the parts of SpaceWire Light which do not depend on GRLIB
+may be distributed under the terms of the GNU Lesser General Public License
+as published by the Free Software Foundation; either version 2.1 of the
+License, or (at your option) any later version.
+
+You should have received a copy of the GNU Lesser General Public License along
+with the SpaceWire Light package. If not, see <http://www.gnu.org/licenses/>.
+
+
 Version history
 ---------------
+
+2011-07-10
+ * spwamba_test.c: Longer delays to run correctly on 100 MHz LEON3.
+ * spwltest.c: Allow smaller user-defined block size; skip unnecessery tests.
+ * License changed to allow LGPL in addition to GPL for non-GRLIB parts.
 
 2011-02-11
  * spwamba: Add tick_out signal.
@@ -99,6 +118,6 @@ Project page at OpenCores:
   http://opencores.org/project,spacewire_light
 
 Email:
-  jvrantwijk (at) xs4all (dot) nl
+  joris (at) jorisvr (dot) nl
 
 --
