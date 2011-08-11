@@ -485,11 +485,14 @@ begin
         variable v:             regs_type;
         variable v_tmprxroom:   unsigned(rxfifosize-1 downto 0);
         variable v_prdata:      std_logic_vector(31 downto 0);
+        variable v_irq:         std_logic_vector(NAHBIRQ-1 downto 0);
         variable v_txfifo_bytepos: integer range 0 to 3;
     begin
         v           := r;
         v_tmprxroom := to_unsigned(0, rxfifosize);
         v_prdata    := (others => '0');
+        v_irq           := (others => '0');
+        v_irq(pirq)     := r.irq;
 
         -- Convert RX/TX byte index to integer.
         v_txfifo_bytepos := to_integer(unsigned(r.txfifo_bytepos));
@@ -839,8 +842,7 @@ begin
 
         -- Drive APB output signals.
         apbo.prdata     <= v_prdata;
-        apbo.pirq       <= (others => '0');
-        apbo.pirq(pirq) <= r.irq;
+        apbo.pirq       <= v_irq;
         apbo.pconfig    <= pconfig;
         apbo.pindex     <= pindex;
 

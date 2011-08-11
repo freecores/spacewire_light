@@ -685,7 +685,7 @@ begin
         ahbo.hwrite     <= r.hwrite;
         ahbo.hwdata     <= r.hwdata;
         ahbo.hlock      <= '0';             -- never lock the bus
-        ahbo.hsize      <= HSIZE_DWORD;     -- always 32-bit words
+        ahbo.hsize      <= HSIZE_WORD;      -- always 32-bit words
         ahbo.hburst     <= HBURST_INCR;     -- undetermined incremental burst
         ahbo.hprot      <= "0011";          -- not cacheable, privileged, data
         ahbo.hirq       <= (others => '0'); -- no interrupts via AHB bus

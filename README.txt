@@ -61,6 +61,10 @@ with the SpaceWire Light package. If not, see <http://www.gnu.org/licenses/>.
 Version history
 ---------------
 
+2011-08-11
+ * spwahbmst.vhd: Fix incorrect "hsize" indication on AHB access.
+   Many thanks to Søren Larsen for reporting this bug.
+
 2011-07-10
  * spwamba_test.c: Longer delays to run correctly on 100 MHz LEON3.
  * spwltest.c: Allow smaller user-defined block size; skip unnecessery tests.
