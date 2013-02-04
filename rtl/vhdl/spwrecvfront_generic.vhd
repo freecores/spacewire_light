@@ -79,13 +79,14 @@ begin
             -- keep strobe signal for data/strobe decoding
             s_spwsi3    <= s_spwsi2;
 
+            -- keep data bit for data/strobe decoding
+            s_inbit     <= s_spwdi2;
+
             if rxen = '1' then
                 -- data/strobe decoding
-                s_inbit     <= s_spwdi2;
                 s_inbvalid  <= s_spwdi2 xor s_spwsi2 xor s_inbit xor s_spwsi3;
             else
                 -- reset receiver
-                s_inbit     <= '0';
                 s_inbvalid  <= '0';
             end if;
 

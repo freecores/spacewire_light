@@ -76,6 +76,7 @@ architecture tb_arch of spwlink_tb is
     signal input_par:        std_logic;
     signal input_idle:       std_logic;
     signal input_pattern:    integer := 0;
+    signal input_strobeflip: std_logic := '0';
 
     -- interconnect signals
     signal s_linki:     spw_link_in_type;
@@ -358,7 +359,7 @@ begin
         procedure input_reset is
         begin
             spw_di <= '0';
-            spw_si <= '0';
+            spw_si <= input_strobeflip;
             input_par <= '0';
         end procedure;
         procedure genbit(b: std_logic) is
@@ -473,7 +474,12 @@ begin
                 while input_pattern = 9 loop
                     genesc; genfct;
                 end loop;
-            else
+            elsif input_pattern = 10 then
+                -- data and strobe both high
+                spw_di <= '1';
+                spw_si <= not input_strobeflip;
+                wait until input_pattern /= 10;
+             else
                 assert false;
             end if;
         end loop;
@@ -528,6 +534,7 @@ begin
         -- Initialize.
         rst <= '1';
         input_pattern <= 0;
+        input_strobeflip <= '0';
         sys_clock_enable <= '1';
         output_collect <= '0';
 
@@ -971,6 +978,64 @@ begin
         output_collect <= '0';
         input_pattern <= 0;
         linkstart <= '0';
+        wait until rising_edge(sysclk);
+
+        -- Test 15: start with wrong strobe polarity.
+        input_strobeflip <= '1';
+        linkstart <= '1';
+        rxroom <= "001000";
+        input_pattern <= 1;
+        wait on started, connecting, running for 20 us;
+        assert (started = '1') and (connecting = '0') and (running = '0')
+            report " 15. weird_strobe (Started)";
+        linkstart <= '0';
+        wait until rising_edge(sysclk);
+        input_pattern <= 9;
+        wait on started, connecting, running, errany for 20 * inbit_period;
+        assert (started = '0') and (connecting = '1') and (running = '0') and (errany = '0')
+            report " 15. weird_strobe (Connecting)";
+        wait on started, connecting, running, errany for 200 ns + 24 * inbit_period;
+        assert (started = '0') and (connecting = '0') and (running = '1') and (errany = '0')
+            report " 15. weird_strobe (Run)";
+        linkdis <= '1';
+        wait until rising_edge(sysclk);
+        input_pattern <= 0;
+        input_strobeflip <= '0';
+        wait until input_idle = '1';
+        linkdis <= '0';
+        wait until rising_edge(sysclk);
+
+        -- Test 16: start with wrong data polarity.
+        input_pattern <= 10;
+        linkstart <= '1';
+        rxroom <= "001111";
+        wait on started, connecting, running for 25 us;
+        assert (started = '1') and (running = '0')
+            report " 16. weird_data (started)";
+        if spw_so = '0' then
+            wait on started, connecting, running, spw_do, spw_so for 1.2 us;
+        end if;
+        assert (started = '1') and (connecting = '0') and (running = '0') and
+               (spw_do = '0') and (spw_so = '1')
+            report " 16. weird_data (SPW strobe)";
+        output_collect <= '1';
+        wait on started, connecting, running for (7.1 * outbit_period);
+        assert (started = '1') and (running = '0')
+            report " 16. weird_data (state 2)";
+        assert (output_ptr = 8) and (output_bits(0 to 7) = "01110100")
+            report " 16. weird_data (NULL 1)";
+        -- got the first NULL, wait for the second one ...
+        wait on started, connecting, running for (8.0 * outbit_period);
+        assert (started = '1') and (running = '0')
+            report " 16. weird_data (state 3)";
+        assert (output_ptr = 16) and (output_bits(8 to 15) = "01110100")
+            report " 16. weird_data (NULL 2)";
+        output_collect <= '0';
+        linkstart <= '0';
+        linkdis <= '1';
+        input_pattern <= 0;
+        wait until rising_edge(sysclk);
+        linkdis <= '0';
         wait until rising_edge(sysclk);
 
         -- Stop simulation

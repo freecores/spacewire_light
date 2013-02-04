@@ -61,6 +61,11 @@ with the SpaceWire Light package. If not, see <http://www.gnu.org/licenses/>.
 Version history
 ---------------
 
+2013-02-04
+ * spwrecvfront_generic.vhd: Correctly handle situation where incoming
+   Data/Strobe signals are not '0' at the beginning of the link setup.
+   Many thanks to Gökçe Aydos for reporting this bug.
+
 2011-08-11
  * spwahbmst.vhd: Fix incorrect "hsize" indication on AHB access.
    Many thanks to Søren Larsen for reporting this bug.
