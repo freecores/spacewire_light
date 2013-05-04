@@ -37,6 +37,7 @@ architecture ahbram_arch of ahbram_loadfile is
 
     signal s_load:  std_ulogic := '1';
     signal s_rdata: std_logic_vector(31 downto 0) := (others => '0');
+    signal s_wdata: std_logic_vector(31 downto 0) := (others => '0');
     signal s_ready: std_ulogic := '0';
     signal s_write: std_ulogic := '0';
     signal s_waddr: std_logic_vector(31 downto 0) := (others => '0');
@@ -87,12 +88,13 @@ begin
 
     ahbo.hready     <= s_ready;
     ahbo.hresp      <= HRESP_OKAY;
-    ahbo.hrdata     <= s_rdata;
+    ahbo.hrdata     <= ahbdrivedata(s_rdata);
     ahbo.hsplit     <= (others => '0');
-    ahbo.hcache     <= '1';
     ahbo.hirq       <= (others => '0');
     ahbo.hconfig    <= hconfig;
     ahbo.hindex     <= hindex;
+
+    s_wdata         <= ahbreadword(ahbi.hwdata, s_waddr(4 downto 2));
 
     process (clk) is
 
@@ -182,22 +184,22 @@ begin
                     when HSIZE_BYTE =>
                         case s_waddr(1 downto 0) is
                             when "00" =>
-                                mem(wa)(31 downto 24) <= ahbi.hwdata(31 downto 24);
+                                mem(wa)(31 downto 24) <= s_wdata(31 downto 24);
                             when "01" =>
-                                mem(wa)(23 downto 16) <= ahbi.hwdata(23 downto 16);
+                                mem(wa)(23 downto 16) <= s_wdata(23 downto 16);
                             when "10" =>
-                                mem(wa)(15 downto 8)  <= ahbi.hwdata(15 downto 8);
+                                mem(wa)(15 downto 8)  <= s_wdata(15 downto 8);
                             when others =>
-                                mem(wa)(7 downto 0)   <= ahbi.hwdata(7 downto 0);
+                                mem(wa)(7 downto 0)   <= s_wdata(7 downto 0);
                         end case;
                     when HSIZE_HWORD =>
                         if s_waddr(1) = '1' then
-                            mem(wa)(15 downto 0)  <= ahbi.hwdata(15 downto 0);
+                            mem(wa)(15 downto 0)  <= s_wdata(15 downto 0);
                         else
-                            mem(wa)(31 downto 16) <= ahbi.hwdata(31 downto 16);
+                            mem(wa)(31 downto 16) <= s_wdata(31 downto 16);
                         end if;
                     when others =>
-                        mem(wa) <= ahbi.hwdata;
+                        mem(wa) <= s_wdata;
                 end case;
             end if;
 

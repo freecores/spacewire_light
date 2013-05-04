@@ -164,6 +164,7 @@ begin
     --
     process (r, rstn, msti, ahbi)  is
         variable v:             regs_type;
+        variable v_hrdata:      std_logic_vector(31 downto 0);
         variable v_burstreq:    std_logic;
         variable v_burstack:    std_logic;
         variable v_rxfifo_read: std_logic;
@@ -171,6 +172,9 @@ begin
         variable v_txfifo_wdata: std_logic_vector(35 downto 0);
     begin
         v           := r;
+
+        -- Decode AHB data bus (64-bit AHB compatibility).
+        v_hrdata    := ahbreadword(ahbi.hrdata);
 
         -- Assume no burst request.
         v_burstreq  := '0';
@@ -183,7 +187,7 @@ begin
         v_rxfifo_read   := '0';
         v_txfifo_write  := '0';
         v_txfifo_wdata(35 downto 32) := (others => '0');
-        v_txfifo_wdata(31 downto 0)  := ahbi.hrdata;
+        v_txfifo_wdata(31 downto 0)  := v_hrdata;
 
         -- Reset registers for interrupts and descriptor updates.
         v.int_rxdesc    := '0';
@@ -261,10 +265,10 @@ begin
                 -- Read RX descriptor flags from memory.
                 v_burstreq  := '1';
                 v.hwrite    := '0';
-                v.rxdes_len := ahbi.hrdata(15 downto 2);
-                v.rxdes_en  := ahbi.hrdata(16);
-                v.rxdes_wr  := ahbi.hrdata(17);
-                v.rxdes_ie  := ahbi.hrdata(18);
+                v.rxdes_len := v_hrdata(15 downto 2);
+                v.rxdes_en  := v_hrdata(16);
+                v.rxdes_wr  := v_hrdata(17);
+                v.rxdes_ie  := v_hrdata(18);
                 v.rxdes_eop := '0';
                 v.rxdes_eep := '0';
                 v.rxdes_pos := (others => '0');
@@ -276,8 +280,8 @@ begin
 
             when st_rxgetptr =>
                 -- Read RX data pointer from memory.
-                v.rxaddr    := ahbi.hrdata(31 downto 2);
-                v.haddr     := ahbi.hrdata(31 downto 2);
+                v.rxaddr    := v_hrdata(31 downto 2);
+                v.haddr     := v_hrdata(31 downto 2);
                 v.firstword := '1';
                 if v_burstack = '1' then
                     -- Got data pointer.
@@ -383,12 +387,12 @@ begin
                 -- Read TX descriptor flags from memory.
                 v_burstreq  := '1';
                 v.hwrite    := '0';
-                v.txdes_len := ahbi.hrdata(15 downto 0);
-                v.txdes_en  := ahbi.hrdata(16);
-                v.txdes_wr  := ahbi.hrdata(17);
-                v.txdes_ie  := ahbi.hrdata(18);
-                v.txdes_eop := ahbi.hrdata(20);
-                v.txdes_eep := ahbi.hrdata(21);
+                v.txdes_len := v_hrdata(15 downto 0);
+                v.txdes_en  := v_hrdata(16);
+                v.txdes_wr  := v_hrdata(17);
+                v.txdes_ie  := v_hrdata(18);
+                v.txdes_eop := v_hrdata(20);
+                v.txdes_eep := v_hrdata(21);
                 if v_burstack = '1' then
                     -- Got descriptor flags.
                     v_burstreq  := '0';
@@ -397,7 +401,7 @@ begin
 
             when st_txgetptr =>
                 -- Read TX data pointer from memory.
-                v.txaddr    := ahbi.hrdata(31 downto 2);
+                v.txaddr    := v_hrdata(31 downto 2);
                 if v_burstack = '1' then
                     -- Got data pointer.
                     if r.txdes_en = '1' then
@@ -412,7 +416,7 @@ begin
                         else
                             v_burstreq  := '1';
                             v.hwrite    := '0';
-                            v.haddr     := ahbi.hrdata(31 downto 2);
+                            v.haddr     := v_hrdata(31 downto 2);
                             if unsigned(r.txdes_len) <= 4 then
                                 -- Transfer only one word.
                                 v.mstate    := st_txfinal;
@@ -683,7 +687,7 @@ begin
         end if;
         ahbo.haddr      <= r.haddr & "00";
         ahbo.hwrite     <= r.hwrite;
-        ahbo.hwdata     <= r.hwdata;
+        ahbo.hwdata     <= ahbdrivedata(r.hwdata);
         ahbo.hlock      <= '0';             -- never lock the bus
         ahbo.hsize      <= HSIZE_WORD;      -- always 32-bit words
         ahbo.hburst     <= HBURST_INCR;     -- undetermined incremental burst

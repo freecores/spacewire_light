@@ -436,12 +436,12 @@ NET "ata_data(2)"  LOC = "h22" | IOSTANDARD = LVTTL; #genio(26)
 NET "ata_data(1)"  LOC = "g18" | IOSTANDARD = LVTTL; #genio(27)
 NET "ata_data(0)"  LOC = "j18" | IOSTANDARD = LVTTL; #genio(28)
 #NET "genio(29)"   LOC = "j21" | IOSTANDARD = LVTTL; #genio(29) / not used
-NET "ata_dmarq"    LOC = "j22" | IOSTANDARD = LVTTL | PULLDOWN; #genio(30) / DMARQ
+NET "genio(30)"    LOC = "j22" | IOSTANDARD = LVTTL;
 NET "ata_diow"     LOC = "h21" | IOSTANDARD = LVTTL; #genio(31) / nDIOW
 NET "ata_dior"     LOC = "k22" | IOSTANDARD = LVTTL; #genio(32) / DIOR
-NET "ata_iordy"    LOC = "k21" | IOSTANDARD = LVTTL | PULLUP; #genio(33) / IORDY
+NET "genio(33)"    LOC = "k21" | IOSTANDARD = LVTTL;
 NET "ata_dmack"    LOC = "k18" | IOSTANDARD = LVTTL; #genio(34) / nDMACK
-NET "ata_intrq"    LOC = "l19" | IOSTANDARD = LVTTL | PULLDOWN; #genio(35) / INTRQ
+NET "genio(35)"    LOC = "l19" | IOSTANDARD = LVTTL;
 NET "ata_da(1)"    LOC = "l18" | IOSTANDARD = LVTTL; #genio(36) / DA1
 NET "ata_da(0)"    LOC = "k17" | IOSTANDARD = LVTTL; #genio(37) / DA0
 NET "ata_cs0"      LOC = "l17" | IOSTANDARD = LVTTL; #genio(38) / nCS0

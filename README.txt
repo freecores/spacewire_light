@@ -2,7 +2,7 @@
 SpaceWire Light
 ===============
 
-Copyright 2009-2011 Joris van Rantwijk
+Copyright 2009-2013 Joris van Rantwijk
 
 
 Overview
@@ -60,6 +60,12 @@ with the SpaceWire Light package. If not, see <http://www.gnu.org/licenses/>.
 
 Version history
 ---------------
+
+2013-05-04
+ * spwahbmst.vhd: Correctly handle 64-bit AHB bus.
+   Many thanks to Tam Do for reporting this bug.
+ * Updates to support GRLIB 1.2.2.
+ * Manual: update to refer to GRLIB 1.2.2.
 
 2013-02-04
  * spwrecvfront_generic.vhd: Correctly handle situation where incoming

@@ -56,10 +56,10 @@ comment 'Peripherals             '
     source lib/gaisler/greth/greth.in
   endmenu
 
-  mainmenu_option next_comment
-  comment 'IDE Disk controller  '
-    source lib/gaisler/ata/ata.in
-  endmenu
+#  mainmenu_option next_comment
+#  comment 'IDE Disk controller  '
+#    source lib/gaisler/ata/ata.in
+#  endmenu
 
   mainmenu_option next_comment
   comment 'CAN                     '

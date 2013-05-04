@@ -5,7 +5,7 @@
 -include .config
 
 # Change this to your local GRLIB directory.
-GRLIB = /data/leon3/grlib-gpl-1.1.0-b4104
+GRLIB = /data/leon3/grlib-gpl-1.2.2-b4123
 
 TOP=leon3mp
 BOARD=gr-xc3s-1500
